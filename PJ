@@ -1,0 +1,104 @@
+%dw 2.0
+output application/json
+import * from dw::core::Strings
+var main = payload mapObject ((value, key, index) -> value)
+var OutboundOrders = main pluck $
+
+fun myFunction(param1) = 1 to ceil(sizeOf(substringBefore(param1.CommentText, "||"))/70) + 1 map {
+
+    	TransactionCode: param1.TransactionCode,
+        CommentType:param1.CommentType,
+            CommentText: if(substring((substringBefore(param1.CommentText, "||")),70*($ -1) ,70*$) != "") substring((substringBefore(param1.CommentText, "||")),70*($ -1) ,70*$) else substringAfter(param1.CommentText, "||"),
+            CommentSequence:if(substring((substringBefore(param1.CommentText, "||")),70*($ -1) ,70*$) != "") $-1 else "D",
+
+} 
+	
+
+
+
+---
+OutboundOrders: OutboundOrders map (item, index) -> {
+	TransactionCode: item.TransactionCode,
+	WarehouseID: item.WarehouseID,
+	OrderNumber: item.OrderNumber,
+	BackOrder: item.BackOrder,
+	PartialOrder: item.PartialOrder,
+	CustomerID: item.CustomerID,
+	CustomerPO: item.CustomerPO,
+	CustomerNumber: item.CustomerNumber,
+	CustomerName: item.CustomerName,
+	EntryDate: item.EntryDate,
+	ShipToCustCode: item.ShipToCustCode,
+	ShipToName: item.ShipToName,
+	ShipToAddr1: item.ShipToAddr1 withMaxSize 30 default "",
+	ShipToAddr2: substring(item.ShipToAddr1,30,60) withMaxSize 30 default "",
+	ShipToAddr3: substring(item.ShipToAddr1,60,90) withMaxSize 30 default "",
+	ShipToCity: item.ShipToCity,
+	ShipToState: item.ShipToState,
+	ShipToZip: item.ShipToZip,
+	ShipToCountryCode: item.ShipToCountryCode,
+	ShipToCountryName: item.ShipToCountryName,
+	ShipToAttention: item.ShipToAttention,
+	ShipToPhone: item.ShipToPhone,
+	BillToCustCode: item.BillToCustCode,
+	BillToName: item.BillToName,
+	BillToAddr1: payload.OutboundOrders.OutboundOrder.BillToAddr1 withMaxSize 30  replace  /\n*/ with("") replace /\t*/ with("") replace />/ with("")default "",
+    BillToAddr2:substring(payload.OutboundOrders.OutboundOrder.BillToAddr1,30,60) replace  /\n*/ with("") replace /\t*/ with("") replace />/ with("") withMaxSize 30 default "",
+    BillToAddr3:substring(payload.OutboundOrders.OutboundOrder.BillToAddr1
+    ,60,90) replace  /\n*/ with("") replace /\t*/ with("") replace />/ with("") withMaxSize 30 default "",
+	BillToCity: item.BillToCity,
+	BillToState: item.BillToState,
+	BillToZip: item.BillToZip,
+	BillToCountryCode: item.BillToCountryCode,
+	BillToCountryName: item.BillToCountryName,
+	BillToPhone: item.BillToPhone,
+	EarliestShipDate: item.EarliestShipDate,
+	LatestShipDate: item.LatestShipDate,
+	CarrierMode: item.CarrierMode,
+	ServiceLevel: item.ServiceLevel,
+	Entity: item.Entity,
+	ERPOrderNumber: item.ERPOrderNumber,
+	ModelNumber: item.ModelNumber,
+	CustomerEquipmentNumber: item.CustomerEquipmentNumber,
+	EquipmentID: item.EquipmentID,
+	EquipmentSerialNumber: item.EquipmentSerialNumber,
+	ServiceJobNumber: item.ServiceJobNumber,
+	PaymentTerms: item.PaymentTerms,
+	FreightTerms: item.FreightTerms,
+	OrderDescription: item.OrderDescription,
+	OrderType: item.OrderType,
+	ServiceMode: item.ServiceMode,
+	HandlingMode: item.HandlingMode,
+	Priority: item.Priority,
+	DeliveryLocation: item.DeliveryLocation,
+	PickJournalFlag: item.PickJournalFlag,
+	ReferenceWHID: item.ReferenceWHID,
+	ReferenceSalesOrderNumber: item.ReferenceSalesOrderNumber,
+	CarrierAccountNumber: item.CarrierAccountNumber,
+	ShipToMail: item.ShipToMail,
+	outboundOrderLines: item.OutboundOrderLines pluck $ map {
+        TransactionCode: item.TransactionCode default "",
+		LineNumber: $.LineNumber default "",
+		ItemNumber: $.ItemNumber default "",
+		ItemDescription: $.ItemDescription default "",
+		CustPart: $.CustPart default "",
+        DGCode: $.DGCode,
+		LotNumber: $.LotNumber default "",
+		SerialNumber: $.SerialNumber default "",
+		Qty: $.Qty default 0,
+		ShippedQty: $.ShippedQty default 0,
+		HazMaterial: $.HazMaterial default "",
+		OrderUOM: $.OrderUOM default "",
+		ERPOrderLineNumber: $.ERPOrderLineNumber default "",
+		PalletBarcode: $.PalletBarcode default "",
+		CustPOLineNumber: $.CustPOLineNumber default "",
+		SellingCurrency: $.SellingCurrency default "", 
+		SellingUnitPrice: $.SellingUnitPrice default 0,
+		SellingLineTotalPrice: $.SellingLineTotalPrice default 0,
+        OutboundOrderLineComments: myFunction($.OutboundOrderLineComment),
+        OutboundOrderComments: myFunction(item.OutboundOrderComment)
+
+	}
+
+    
+}
