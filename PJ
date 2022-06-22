@@ -4,14 +4,37 @@ import * from dw::core::Strings
 var main = payload mapObject ((value, key, index) -> value)
 var OutboundOrders = main pluck $
 
-fun myFunction(param1) = 1 to ceil(sizeOf(substringBefore(param1.CommentText, "||"))/70) + 1 map {
+fun myFunction1(param1) = 1 to ceil(sizeOf(substringBefore(param1.CommentText, "||"))/70) + 1 map {
 
     	TransactionCode: param1.TransactionCode,
-        CommentType:param1.CommentType,
-            CommentText: if(substring((substringBefore(param1.CommentText, "||")),70*($ -1) ,70*$) != "") substring((substringBefore(param1.CommentText, "||")),70*($ -1) ,70*$) else substringAfter(param1.CommentText, "||"),
-            CommentSequence:if(substring((substringBefore(param1.CommentText, "||")),70*($ -1) ,70*$) != "") $-1 else "D",
+        CommentType:if(substring((substringBefore(param1.CommentType, "||")),70*($ -1) ,70*$) != "") param1.CommentType replace  /\n*/ with("") replace /\t*/ with("") replace />/ with("") else "D",
+            CommentText: if(substring((substringBefore(param1.CommentText, "||")),70*($ -1) ,70*$) != "") substring((substringBefore(param1.CommentText, "||")),70*($ -1) ,70*$) replace  /\n*/ with("") replace /\t*/ with("") replace />/ with("") else substringAfter(param1.CommentText, "||"),
+            CommentSequence: $-1 
 
 } 
+
+fun myFunction2(param1) = 1 to  1 map {
+
+    	TransactionCode: param1.TransactionCode,
+        CommentType:"",
+            CommentText: "",
+            CommentSequence: param1.CommentSequence
+
+} 
+
+
+
+fun myFunction3(param1) = 1 to ceil(sizeOf(param1.CommentText)/70) map {
+
+    	TransactionCode: param1.TransactionCode,
+        CommentType:param1.CommentType replace  /\n*/ with("") replace /\t*/ with("") replace />/ with(""),
+            CommentText: substring(param1.CommentText,70*($ -1) ,70*$) replace  /\n*/ with("") replace /\t*/ with("") replace />/ with(""),
+            CommentSequence: $-1
+
+} 
+
+
+
 	
 
 
@@ -95,10 +118,10 @@ OutboundOrders: OutboundOrders map (item, index) -> {
 		SellingCurrency: $.SellingCurrency default "", 
 		SellingUnitPrice: $.SellingUnitPrice default 0,
 		SellingLineTotalPrice: $.SellingLineTotalPrice default 0,
-        OutboundOrderLineComments: myFunction($.OutboundOrderLineComment),
-        OutboundOrderComments: myFunction(item.OutboundOrderComment)
-
-	}
+        OutboundOrderLineComments: if($.OutboundOrderLineComment.CommentText != null)myFunction1($.OutboundOrderLineComment) else myFunction2($.OutboundOrderLineComment)
+     
+	},
+    OutboundOrderComment: if(item.OutboundOrderComment.CommentText != null) myFunction3(item.OutboundOrderComment) else myFunction2(item.OutboundOrderComment)
 
     
 }
